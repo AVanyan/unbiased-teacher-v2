@@ -793,6 +793,9 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
         label_data_q, label_data_k, unlabel_data_q, unlabel_data_k = data
         data_time = time.perf_counter() - start
 
+        # TEACHER_INFERENCE_STEPS = int(np.ceil(
+        #     len(self._trainer.data_loader.label_dataset.dataset) / self._trainer.data_loader.batch_size_label
+        # ))
         # burn-in stage (supervised training with labeled data)
         if self.iter < self.cfg.SEMISUPNET.BURN_UP_STEP:
 
@@ -810,11 +813,32 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
                 if key[:4] == "loss":
                     loss_dict[key] = record_dict[key]
             losses = sum(loss_dict.values())
-
         else:
             # copy student model to teacher model
             if self.iter == self.cfg.SEMISUPNET.BURN_UP_STEP:
                 self._update_teacher_model(keep_rate=0.0)
+
+            # if self.iter < self.cfg.SEMISUPNET.BURN_UP_STEP + TEACHER_INFERENCE_STEPS:
+            #     with torch.no_grad():
+            #         (
+            #             _,
+            #             teacher_proposals_rpn_unsup_k,
+            #             teacher_proposals_roih_unsup_k,
+            #             _,
+            #         ) = self.model_teacher(label_data_k, branch="unsup_data_weak")
+            #         if len(teacher_proposals_roih_unsup_k):
+            #             for img, teacher_proposal in zip(label_data_k, teacher_proposals_roih_unsup_k):
+            #                 for p in range(len(teacher_proposal)):
+            #                     fields = teacher_proposal[p].get_fields()
+            #                     pred_boxes = fields['pred_boxes'].tensor.data.cpu().detach().numpy()[0]
+            #                     pred_classes = fields['pred_classes'].data.cpu().detach().numpy()[0]
+            #                     scores = fields['scores'].data.cpu().detach().numpy()[0]
+            #                     pred_string = img['file_name'] + ' ' + str(pred_boxes[0]) + ' ' + str(pred_boxes[1]) + ' ' + str(pred_boxes[2]) + ' ' + str(pred_boxes[3]) + ' ' + str(pred_classes) + ' ' + str(scores) + '\n'
+            #                     f1 = open('/home/hkhachatrian/unbiased-teacher-v2/output/debug_labeled.txt', "a+")
+            #                     f1.writelines(pred_string)
+            #                     f1.close()
+            #         # TODO: add labeled to another file
+            #     return
 
             if (
                 self.iter - self.cfg.SEMISUPNET.BURN_UP_STEP

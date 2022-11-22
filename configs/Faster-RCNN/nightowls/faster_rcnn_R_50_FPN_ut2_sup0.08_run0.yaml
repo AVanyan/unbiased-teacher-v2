@@ -1,0 +1,51 @@
+_BASE_: "../Base-RCNN-FPN.yaml"
+MODEL:
+  META_ARCHITECTURE: "TwoStagePseudoLabGeneralizedRCNN"
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: False
+  RESNETS:
+    DEPTH: 50
+  PROPOSAL_GENERATOR:
+    NAME: "PseudoLabRPN"
+  RPN:
+    POSITIVE_FRACTION: 0.25
+    LOSS: "CrossEntropy"
+  ROI_HEADS:
+    NAME: "StandardROIHeadsPseudoLab"
+    NUM_CLASSES: 3
+    LOSS: "FocalLoss_BoundaryVar"
+  ROI_BOX_HEAD:
+    BBOX_REG_LOSS_TYPE: "nlloss"
+    CLS_AGNOSTIC_BBOX_REG: True
+SOLVER:
+  LR_SCHEDULER_NAME: "WarmupMultiStepLR"
+  STEPS: (60000,)
+  MAX_ITER: 60000
+  IMG_PER_BATCH_LABEL: 32
+  IMG_PER_BATCH_UNLABEL: 32
+  BASE_LR: 0.003
+DATALOADER:
+  SUP_PERCENT: 0.08
+  RANDOM_DATA_SEED: 0
+DATASETS:
+  CROSS_DATASET: False
+  TRAIN: ("nightowls_train",)
+  TEST: ("nightowls_val",)
+SEMISUPNET:
+  Trainer: "ubteacher_rcnn"
+  BBOX_THRESHOLD: 0.7
+  TEACHER_UPDATE_ITER: 1
+  BURN_UP_STEP: 1000
+  EMA_KEEP_RATE: 0.9996
+  UNSUP_LOSS_WEIGHT: 5.0
+  UNSUP_REG_LOSS_WEIGHT: 1.0
+TEST:
+  EVAL_PERIOD: 1000
+  EVALUATOR: "COCOeval"
+  VAL_LOSS: False
+INPUT: # scale jittering (follow soft teacher)
+  MIN_SIZE_TRAIN: (400, 1200)
+  MIN_SIZE_TRAIN_SAMPLING: "range"
+OUTPUT_DIR: ./output/nightowls_final
+SOLVER:
+  CHECKPOINT_PERIOD: 1000

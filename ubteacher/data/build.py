@@ -31,13 +31,19 @@ def divide_label_unlabel(
     dataset_dicts, SupPercent, random_data_seed, random_data_seed_path
 ):
     num_all = len(dataset_dicts)
-    num_label = int(SupPercent / 100.0 * num_all)
+    # num_label = int(SupPercent / 100.0 * num_all)
+    num_label = 24
+    labeled_images_names = []
+    with open('/mnt/lwll/lwll-coral/hrant/session_data/9rHyS6FE2WOAkSvsy9dX/adaption/train_3.txt') as labeled_names:
+        for line in labeled_names:
+            labeled_images_names.append(line.split('\n')[0])
 
     # read from pre-generated data seed
-    with PathManager.open(random_data_seed_path, "r") as COCO_sup_file:
-        coco_random_idx = json.load(COCO_sup_file)
+    # with PathManager.open(random_data_seed_path, "r") as COCO_sup_file:
+    #     coco_random_idx = json.load(COCO_sup_file)
 
-    labeled_idx = np.array(coco_random_idx[str(SupPercent)][str(random_data_seed)])
+    labeled_idx = np.random.choice(range(num_all), size=num_label, replace=False)
+    # labeled_idx = np.array(coco_random_idx[str(SupPercent)][str(random_data_seed)])
     assert labeled_idx.shape[0] == num_label, "Number of READ_DATA is mismatched."
 
     label_dicts = []
@@ -45,11 +51,15 @@ def divide_label_unlabel(
     labeled_idx = set(labeled_idx)
 
     for i in range(len(dataset_dicts)):
-        if i in labeled_idx:
+        if dataset_dicts[i]['file_name'] in labeled_images_names:
             label_dicts.append(dataset_dicts[i])
         else:
             unlabel_dicts.append(dataset_dicts[i])
-
+        # if i in labeled_idx:
+        #     label_dicts.append(dataset_dicts[i])
+        # else:
+        #     unlabel_dicts.append(dataset_dicts[i])
+        
     return label_dicts, unlabel_dicts
 
 

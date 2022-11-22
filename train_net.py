@@ -9,6 +9,11 @@ from detectron2.engine import default_argument_parser, default_setup, launch
 from ubteacher.modeling import *
 from ubteacher.engine import *
 from ubteacher import add_ubteacher_config
+import wandb
+
+from detectron2.data.datasets import register_coco_instances
+register_coco_instances("nightowls_train", {}, "/lwll/external/nightowls/annotations/instances_train.json", "/lwll/external/nightowls/train")
+register_coco_instances("nightowls_val", {}, "/lwll/external/nightowls/annotations/instances_val.json", "/lwll/external/nightowls/val")
 
 
 
@@ -17,11 +22,14 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
+
     add_ubteacher_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
+    wandb.init(project='nightowls_final', sync_tensorboard=True,
+           settings=wandb.Settings(start_method="thread", console="off"), config=cfg, )
     return cfg
 
 

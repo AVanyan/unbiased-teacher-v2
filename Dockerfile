@@ -80,5 +80,5 @@ RUN chmod -R 777 /nonexistent
 USER 65534:65534
 
 
-# ENTRYPOINT python full_detection_tasks.py
-ENTRYPOINT python run_pipeline.py
+ENTRYPOINT python full_detection_tasks.py
+# ENTRYPOINT python run_pipeline.py

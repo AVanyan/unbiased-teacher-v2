@@ -63,7 +63,7 @@ RUN ln -s /usr/bin/python3.8 /usr/bin/python
 
 #Install other libraries from requirements.txt
 COPY requirements.txt /tmp/
-RUN cd /tmp/ && pip install -r requirements.txt
+RUN cd /tmp/ && pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu116
 RUN python3.8 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 

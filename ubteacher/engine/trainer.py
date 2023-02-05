@@ -4,6 +4,8 @@ import logging
 import os
 import time
 from collections import OrderedDict
+import csv
+import json
 
 import detectron2.utils.comm as comm
 import numpy as np
@@ -749,6 +751,36 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
             raise ValueError("Error in proposal type.")
 
         return new_proposal_inst
+    
+    def per_class_threshold_bbox(self, proposal_bbox_inst, thres=[0.7, 0.7, 0.7], proposal_type="roih"):
+        if proposal_type == "roih":
+            valid_map = [False] * len(proposal_bbox_inst.scores)
+
+            for cls in range(len(proposal_bbox_inst.pred_classes)):
+                if proposal_bbox_inst.scores[cls] > thres[proposal_bbox_inst.pred_classes[cls]]:
+                    valid_map[cls] = True
+
+            # create instances containing boxes and gt_classes
+            image_shape = proposal_bbox_inst.image_size
+            new_proposal_inst = Instances(image_shape)
+
+            # create box
+            new_bbox_loc = proposal_bbox_inst.pred_boxes.tensor[valid_map, :]
+            new_boxes = Boxes(new_bbox_loc)
+
+            # add boxes to instances
+            new_proposal_inst.gt_boxes = new_boxes
+            new_proposal_inst.gt_classes = proposal_bbox_inst.pred_classes[valid_map]
+            new_proposal_inst.scores = proposal_bbox_inst.scores[valid_map]
+
+            if proposal_bbox_inst.has("pred_boxes_std"):
+                new_proposal_inst.pred_boxes_std = proposal_bbox_inst.pred_boxes_std[
+                    valid_map, :
+                ]
+        else:
+            raise ValueError("Error in proposal type.")
+
+        return new_proposal_inst
 
     def process_pseudo_label(
         self, proposals_rpn_unsup_k, cur_threshold, proposal_type, psedo_label_method=""
@@ -760,6 +792,50 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
             if psedo_label_method == "thresholding":
                 proposal_bbox_inst = self.threshold_bbox(
                     proposal_bbox_inst, thres=cur_threshold, proposal_type=proposal_type
+                )
+            elif psedo_label_method == "constant":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.7, 0.7, 0.7], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "equal_90_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.177, 0.177, 0.177], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "class-specific_90_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.192, 0.087, 0.152], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "equal_95_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.223, 0.223, 0.223], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "class-specific_95_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.242, 0.097, 0.188], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "equal_97_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.260, 0.260, 0.260], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "class-specific_97_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.279, 0.106, 0.216], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "equal_99_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.341, 0.341, 0.341], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "class-specific_99_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.362, 0.121, 0.284], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "equal_99.9_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.517, 0.517, 0.517], proposal_type=proposal_type
+                )
+            elif psedo_label_method == "class-specific_99.9_percentile":
+                proposal_bbox_inst = self.per_class_threshold_bbox(
+                    proposal_bbox_inst, thres=[0.532, 0.150, 0.461], proposal_type=proposal_type
                 )
             else:
                 raise ValueError("Unkown pseudo label boxes methods")
@@ -867,7 +943,7 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
 
             # Pseudo_labeling for ROI head (bbox location/objectness)
             pesudo_proposals_roih_unsup_k, _ = self.process_pseudo_label(
-                proposals_roih_unsup_k, cur_threshold, "roih", "thresholding"
+                proposals_roih_unsup_k, cur_threshold, "roih", self.cfg.SEMISUPNET.PSEUDO_BBOX_SAMPLE
             )
             joint_proposal_dict["proposals_pseudo_roih"] = pesudo_proposals_roih_unsup_k
 
@@ -1045,3 +1121,39 @@ class UBRCNNTeacherTrainer(DefaultTrainer):
             # run writers in the end, so that evaluation metrics are written
             ret.append(hooks.PeriodicWriter(self.build_writers(), period=20))
         return ret
+
+    @classmethod
+    def json_to_csv(cls, cfg, json_file_path, data_instances_path):
+
+        with open(data_instances_path) as data_path:
+            data_instances = json.load(data_path)
+        
+        images = data_instances['images']
+        
+        with open(json_file_path) as json_results:
+            results = json.load(json_results)
+
+        output_csv = os.path.join(cfg.OUTPUT_DIR, 'output.csv')
+
+        headers = ['id', 'confidence', 'class', 'bbox']
+        csvwriter_file = open(output_csv, 'w+', newline='')
+        csvwriter = csv.writer(csvwriter_file)
+        csvwriter.writerow(headers)
+
+        image_id_to_name = {}
+
+        for image in images:
+            name = image['file_name'].split('/')[-1].split('.')[0]
+            id = image["id"]
+            image_id_to_name[id] = name
+
+        for result in results:
+            img_id = image_id_to_name[result['image_id']]  # we should keep image ID somehow in the batch!
+            box = result['bbox']
+            bbox = [box[0], box[1], box[0] + box[2], box[1] +  box[3]]
+            label = result['category_id']
+            score= result['score']
+            row = [img_id, score, label, ','.join(["{:.0f}".format(t) for t in bbox])]
+
+            csvwriter.writerow(row)
+

@@ -28,13 +28,14 @@ This file contains the default logic to build a dataloader for training or testi
 
 
 def divide_label_unlabel(
-    dataset_dicts, SupPercent, random_data_seed, random_data_seed_path
+    dataset_dicts, labeled_data_path, SupPercent, random_data_seed, random_data_seed_path
 ):
+
     num_all = len(dataset_dicts)
     # num_label = int(SupPercent / 100.0 * num_all)
     num_label = 24
     labeled_images_names = []
-    with open('/mnt/lwll/lwll-coral/hrant/session_data/9rHyS6FE2WOAkSvsy9dX/adaption/train_3.txt') as labeled_names:
+    with open(labeled_data_path) as labeled_names:
         for line in labeled_names:
             labeled_images_names.append(line.split('\n')[0])
 
@@ -42,23 +43,26 @@ def divide_label_unlabel(
     # with PathManager.open(random_data_seed_path, "r") as COCO_sup_file:
     #     coco_random_idx = json.load(COCO_sup_file)
 
-    labeled_idx = np.random.choice(range(num_all), size=num_label, replace=False)
-    # labeled_idx = np.array(coco_random_idx[str(SupPercent)][str(random_data_seed)])
-    assert labeled_idx.shape[0] == num_label, "Number of READ_DATA is mismatched."
+    # labeled_idx = np.random.choice(range(num_all), size=num_label, replace=False)
+    # # labeled_idx = np.array(coco_random_idx[str(SupPercent)][str(random_data_seed)])
+    # assert labeled_idx.shape[0] == num_label, "Number of READ_DATA is mismatched."
 
     label_dicts = []
     unlabel_dicts = []
-    labeled_idx = set(labeled_idx)
+    # labeled_idx = set(labeled_idx)
 
     for i in range(len(dataset_dicts)):
         if dataset_dicts[i]['file_name'] in labeled_images_names:
             label_dicts.append(dataset_dicts[i])
         else:
             unlabel_dicts.append(dataset_dicts[i])
-        # if i in labeled_idx:
-        #     label_dicts.append(dataset_dicts[i])
-        # else:
-        #     unlabel_dicts.append(dataset_dicts[i])
+    
+    if len(unlabel_dicts) == 0:
+        unlabel_dicts.append(label_dicts[0])
+        unlabel_dicts.append(label_dicts[1])
+        unlabel_dicts.append(label_dicts[2])
+
+        label_dicts = label_dicts[3:]
         
     return label_dicts, unlabel_dicts
 
@@ -80,6 +84,7 @@ def build_detection_semisup_train_loader(cfg, mapper=None):
     # Divide into labeled and unlabeled sets according to supervision percentage
     label_dicts, unlabel_dicts = divide_label_unlabel(
         dataset_dicts,
+        cfg.LABELED_FILE_PATH,
         cfg.DATALOADER.SUP_PERCENT,
         cfg.DATALOADER.RANDOM_DATA_SEED,
         cfg.DATALOADER.RANDOM_DATA_SEED_PATH,
@@ -188,6 +193,7 @@ def build_detection_semisup_train_loader_two_crops(cfg, mapper=None):
         # Divide into labeled and unlabeled sets according to supervision percentage
         label_dicts, unlabel_dicts = divide_label_unlabel(
             dataset_dicts,
+            cfg.LABELED_FILE_PATH,
             cfg.DATALOADER.SUP_PERCENT,
             cfg.DATALOADER.RANDOM_DATA_SEED,
             cfg.DATALOADER.RANDOM_DATA_SEED_PATH,

@@ -1,0 +1,16 @@
+title: Coral Object Detection
+description: Evaluation
+labels:
+  team: coral
+  contacts: ["Hrant Khachatrian <hrant@yerevann.com>"]
+configs:
+  - name: test
+    command:
+      - ./run_unit_tests.sh
+    labels:
+      test: true
+  - name: hackathon-1
+    command:
+      - ./test_strawman_api.sh
+    labels:
+      ha_2021_03: true

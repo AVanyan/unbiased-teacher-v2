@@ -16,7 +16,6 @@ register_coco_instances("nightowls_train", {}, "/lwll/external/nightowls/annotat
 register_coco_instances("nightowls_val", {}, "/lwll/external/nightowls/annotations/instances_val.json", "/lwll/external/nightowls/val")
 
 
-
 def setup(args):
     """
     Create configs and perform basic setups.
@@ -28,8 +27,9 @@ def setup(args):
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
-    wandb.init(project='nightowls_final', sync_tensorboard=True,
+    wandb.init(project='nightowls', sync_tensorboard=True,
            settings=wandb.Settings(start_method="thread", console="off"), config=cfg, )
+    wandb.run.name = cfg.EXPERIMENT_NAME
     return cfg
 
 

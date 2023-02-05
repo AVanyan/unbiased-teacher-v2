@@ -2,6 +2,7 @@
 /wandb
 /datasets
 /.vscode
+/teacher_outputs
 /ubteacher/__pycache__
 /ubteacher/checkpoint/__pycache__
 /ubteacher/data/__pycache__
@@ -17,3 +18,5 @@
 /ubteacher/utils/__pycache__
 /ubteacher/engine/__pycache__
 /ubteacher/data/transforms/__pycache__
+objectness_data
+session_data

@@ -12,7 +12,6 @@ MODEL:
     LOSS: "CrossEntropy"
   ROI_HEADS:
     NAME: "StandardROIHeadsPseudoLab"
-    NUM_CLASSES: 3
     LOSS: "FocalLoss_BoundaryVar"
   ROI_BOX_HEAD:
     BBOX_REG_LOSS_TYPE: "nlloss"
@@ -21,30 +20,28 @@ SOLVER:
   LR_SCHEDULER_NAME: "WarmupMultiStepLR"
   STEPS: (60000,)
   MAX_ITER: 60000
-  IMG_PER_BATCH_LABEL: 32
-  IMG_PER_BATCH_UNLABEL: 32
-  BASE_LR: 0.003
-  CHECKPOINT_PERIOD: 250
+  IMG_PER_BATCH_LABEL: 4
+  IMG_PER_BATCH_UNLABEL: 4
+  BASE_LR: 0.02
+  CHECKPOINT_PERIOD: 1000
 DATALOADER:
+  FILTER_EMPTY_ANNOTATIONS: False
   SUP_PERCENT: 0.08
   RANDOM_DATA_SEED: 0
 DATASETS:
   CROSS_DATASET: False
-  TRAIN: ("nightowls_train",)
-  TEST: ("nightowls_val",)
 SEMISUPNET:
   Trainer: "ubteacher_rcnn"
-  PSEUDO_BBOX_SAMPLE: "per_class_thresholding"
+  PSEUDO_BBOX_SAMPLE: "thresholding"
   BBOX_THRESHOLD: 0.7
   TEACHER_UPDATE_ITER: 1
-  BURN_UP_STEP: 0
+  BURN_UP_STEP: 250
   EMA_KEEP_RATE: 0.9996
   UNSUP_LOSS_WEIGHT: 2.0
   UNSUP_REG_LOSS_WEIGHT: 1.0
   SUP_LOSS_WEIGHT: 0.5
 TEST:
-  EVAL_PERIOD: 250
-  EVALUATOR: "COCOeval"
+  EVAL_PERIOD: 0
   VAL_LOSS: False
 INPUT: # scale jittering (follow soft teacher)
   MIN_SIZE_TRAIN: (400, 1200)
@@ -52,4 +49,3 @@ INPUT: # scale jittering (follow soft teacher)
 OUTPUT_DIR: ./output/debug
 EXPERIMENT_NAME: 'debug'
 SEED: 1
-LABELED_FILE_PATH: '/mnt/lwll/lwll-coral/hrant/session_data/9rHyS6FE2WOAkSvsy9dX/adaption/train_3.txt'

@@ -217,3 +217,6 @@ def add_ubteacher_config(cfg):
 
     # use weak labeled
     _C.SEMISUPNET.USE_SUP_STRONG = "both"
+    _C.EXPERIMENT_NAME = ''
+    _C.LABELED_FILE_PATH = ''
+

@@ -11,7 +11,7 @@ from detectron2.engine import default_argument_parser, default_setup, launch
 from ubteacher.modeling import *
 from ubteacher.engine import *
 from ubteacher import add_ubteacher_config
-import wandb
+# import wandb
 
 from detectron2.data.datasets import register_coco_instances
 
@@ -83,9 +83,9 @@ def main(args):
     cfg.merge_from_list(config_list)
     cfg.freeze()
     default_setup(cfg, args)
-    wandb.init(project='{}_{}_{}_{}'.format(args.dataset_name, args.phase, args.stage, cfg.EXPERIMENT_NAME), sync_tensorboard=True,
-           settings=wandb.Settings(start_method="thread", console="off"), config=cfg, )
-    wandb.run.name = cfg.EXPERIMENT_NAME
+    # wandb.init(project='{}_{}_{}_{}'.format(args.dataset_name, args.phase, args.stage, cfg.EXPERIMENT_NAME), sync_tensorboard=True,
+    #        settings=wandb.Settings(start_method="thread", console="off"), config=cfg, )
+    # wandb.run.name = cfg.EXPERIMENT_NAME
 
     Trainer = UBRCNNTeacherTrainer
 

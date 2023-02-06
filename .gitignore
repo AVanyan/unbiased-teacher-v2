@@ -21,3 +21,16 @@
 objectness_data
 session_data
 env.list
+clip_playground-visdrone.ipynb
+clip_playground.ipynb
+coco_results.pth
+load_unbiased_teacher_model.ipynb
+eval_glip_results.ipynb
+nightowls_predictions.json
+/__pycache__
+nightowls_unlabeled_gt.npy
+predictions.pth
+/.ipynb_checkpoints
+preprocessing_nightowls_dataset.ipynb
+visdrone_unlabeled_gt.npy
+visdrone_data_vis.ipynb
